@@ -3,9 +3,9 @@ package ie.sujesh.apache.spark
 import com.typesafe.config.ConfigFactory
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{min, max, count, avg}
+import org.apache.spark.sql.functions.{avg, max, min}
 
-object Part2 extends App {
+object Task2_4 extends App {
 
   val config = ConfigFactory.load("application.conf").getConfig("truata.de.challenge")
   val sparkConfig = config.getConfig("spark")
@@ -15,7 +15,7 @@ object Part2 extends App {
 
   val spark = SparkSession.builder
     .master(sparkConfig.getString("master"))
-    .appName("Part-2_Spark_Dataframe_API")
+    .appName("Part-2_4_Spark_Dataframe_API")
     .config("spark.hadoop.validateOutputSpecs", "False")
     .config("mapreduce.fileoutputcommitter.marksuccessfuljobs", "false")
     .config("mapreduce.fileoutputcommitter.algorithm.version", "2")
@@ -23,44 +23,13 @@ object Part2 extends App {
 
   spark.sparkContext.setLogLevel(sparkConfig.getString("logLevel"))
 
-  try {
-    if (!new java.io.File(INPUT_FILE_NAME).exists) {
-      logger.info("Downloading file to " + INPUT_FILE_NAME)
-      Utils.fileDownloader(appConfig.getString("part2Url"), INPUT_FILE_NAME)
-    }
-  }
-  catch {
-    case e: Exception => logger.error("Failed to download file", e)
-  }
-
   import spark.implicits._
-
   val airbnbDF = spark.read.parquet(INPUT_FILE_NAME)
-  airbnbDF.printSchema
-  airbnbDF.cache.show(5)
-
-  val out_2_2_DF = airbnbDF.agg(
-    min("price").alias("min_price"),
-    max("price").alias("max_price"),
-    count("price").alias("row_count"))
-
-  out_2_2_DF.coalesce(1).write.option("header","true").csv(appConfig.getString("tempDir"))
-  logger.info("Writing min, max and count to out_2_2.txt")
-  Utils.renameAndMoveFile(appConfig.getString("tempDir"), "out_2_2.txt")
-
-
-  val priceReviewFilteredDF = airbnbDF.filter($"price" > 5000 && $"review_scores_rating" === 100.0)
-  val out_2_3_DF = priceReviewFilteredDF.agg(
-    avg("bathrooms").alias("avg_bathrooms"),
-    avg("bedrooms").alias("avg_bedrooms"))
-
-  out_2_3_DF.coalesce(1).write.option("header","true").csv(appConfig.getString("tempDir"))
-  logger.info("Writing average number of bathrooms and bedrooms for properties with \n" +
-    " price of > 5000 and a review score being exactly equalt to 10 to out_2_3.txt")
-  Utils.renameAndMoveFile(appConfig.getString("tempDir"), "out_2_3.txt")
 
   val minPrice = airbnbDF.agg(min("price")).first().getDouble(0)
   val highestRating  = airbnbDF.agg(max("review_scores_rating")).first().getDouble(0)
+
+  println(highestRating)
 
   val lowestPriceHighestRatingDF = airbnbDF
     .filter($"price" === minPrice && $"review_scores_rating" === highestRating)
@@ -69,5 +38,7 @@ object Part2 extends App {
 
   logger.info("Writing the number of people accommodated by the property with lowest price and highest rating to out_2_4.txt")
   Utils.writeToFile(appConfig.getString("outputDir") + "out_2_4.txt", numPeople.toString)
-}
 
+  spark.close
+
+}

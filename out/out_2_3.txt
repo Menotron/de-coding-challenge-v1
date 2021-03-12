@@ -1,0 +1,2 @@
+avg_bathrooms,avg_bedrooms
+2.5,4.5

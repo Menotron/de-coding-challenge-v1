@@ -1,7 +1,8 @@
-project/target
 target
 *.class
 *.log
 *.iml
 .idea
 .bsp
+C:\Users\Sujesh\Documents\GitHub\de-coding-challenge-v1\src\main\scala\ie\sujesh\apache\spark\Part1.scala
+C:\Users\Sujesh\Documents\GitHub\de-coding-challenge-v1\src\main\scala\ie\sujesh\apache\spark\Part2.scala
